@@ -335,6 +335,33 @@ python mage_vl/inference_streaming.py \
 
 The gate is trained on codec inputs, so `--video_backend codec` is the intended setting. Use `--video_backend frames` for direct frame sampling. Additional controls include `--num_frames`, `--cur_fps`, `--max_segments`, `--max_new_tokens`, `--gate_threshold`, and `--attn_impl`.
 
+### Web UI for video testing
+
+A Gradio-based web interface is available for interactive video upload and testing:
+
+```bash
+# Launch the web UI
+python mage_vl/app.py
+
+# With public sharing link
+python mage_vl/app.py --share
+
+# Custom port
+python mage_vl/app.py --port 7861
+
+# Preload model at startup
+python mage_vl/app.py --preload microsoft/Mage-VL
+```
+
+The web interface provides:
+- **Video upload**: Drag-and-drop or browse to upload videos
+- **Backend selection**: Choose between frames (uniform sampling) or codec (HEVC/DCVC-RT)
+- **Parameter controls**: Adjust num_frames, max_pixels, and max_new_tokens
+- **Real-time results**: View model responses, visual token counts, and processing time
+- **Frame gallery**: Visualize sampled frames (frames backend only)
+
+Open `http://localhost:7860` in your browser to access the interface.
+
 ## 📝 Citation
 
 ```bibtex
