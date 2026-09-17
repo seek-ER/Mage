@@ -11,11 +11,15 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import time
+from pathlib import Path
+
+# Allow running as both `python mage_vl/app.py` and `python -m mage_vl.app`.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import gradio as gr
 import torch
-from PIL import Image
 from transformers import AutoModelForCausalLM, AutoProcessor
 
 from mage_vl.inference_base import sample_video, count_visual_tokens
