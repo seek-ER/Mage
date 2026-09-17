@@ -39,8 +39,25 @@ def sample_video(video: str, num_frames: int):
     return frames
 
 
+def count_visual_tokens(inputs: dict) -> int:
+    """Return total visual token count from processor outputs.
+
+    Uses image_grid_thw when present (Mage-VL codec + frames paths both emit it).
+    Falls back to pixel_values shape for other models.
+    """
+    if "image_grid_thw" in inputs:
+        grid = inputs["image_grid_thw"]
+        return int(grid.prod(dim=-1).sum().item())
+    if "pixel_values" in inputs:
+        pv = inputs["pixel_values"]
+        if pv.ndim >= 3:
+            return int(pv.shape[-2] * pv.shape[-1])
+    return 0
+
+
 def run_offline(args):
     import os
+    import time
     import torch
     from PIL import Image
     from transformers import AutoModelForCausalLM, AutoProcessor
@@ -94,8 +111,21 @@ def run_offline(args):
     inputs = {k: (v.to(model.device) if hasattr(v, "to") else v) for k, v in inputs.items()}
     if "pixel_values" in inputs:
         inputs["pixel_values"] = inputs["pixel_values"].to(model.dtype)
+
+    visual_tokens = count_visual_tokens(inputs)
+    backend = "codec" if args.video and args.video_backend == "codec" else "frames"
+    if args.image:
+        backend = "image"
+    print(f"[{backend}] visual_tokens = {visual_tokens}")
+
     with torch.inference_mode():
+        torch.cuda.synchronize(model.device)
+        start = time.perf_counter()
         output = model.generate(**inputs, max_new_tokens=args.max_new_tokens, do_sample=False)
+        torch.cuda.synchronize(model.device)
+        elapsed = time.perf_counter() - start
+    print(f"[{backend}] time = {elapsed:.2f}s")
+
     answer = processor.tokenizer.decode(
         output[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True
     )
