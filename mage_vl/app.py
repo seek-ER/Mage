@@ -208,7 +208,6 @@ def build_ui():
                 video_input = gr.Video(
                     label="上传视频",
                     sources=["upload"],
-                    type="filepath",
                 )
                 question_input = gr.Textbox(
                     label="问题",
