@@ -86,6 +86,7 @@ def build_segment_inputs(
     clip_dir: Path,
     num_frames: int,
     cur_fps: float,
+    prompt: str = USER_PROMPT,
 ) -> dict | None:
     duration = end - start
     clip_path = clip_dir / (
@@ -101,7 +102,7 @@ def build_segment_inputs(
         "role": "user",
         "content": [
             {"type": "video"},
-            {"type": "text", "text": USER_PROMPT},
+            {"type": "text", "text": prompt},
         ],
     }]
     prompt = processor.apply_chat_template(
