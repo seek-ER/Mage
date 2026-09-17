@@ -26,6 +26,7 @@ from mage_vl.inference_base import sample_video, count_visual_tokens
 
 DEVICE = "cuda"
 _CACHE: dict[str, tuple] = {}  # model_path -> (model, processor)
+_PRELOADED: list[str] = []  # paths loaded at startup, used as UI defaults
 
 
 def load_model(model_path: str, device: str = DEVICE):
@@ -165,9 +166,12 @@ def build_ui():
             # Left column: Configuration
             with gr.Column(scale=1):
                 gr.Markdown("### 模型配置")
+                # Prefer startup-preloaded paths, so offline servers don't fall
+                # back to a Hugging Face repo id they cannot reach.
+                model_choices = list(dict.fromkeys(_PRELOADED + ["microsoft/Mage-VL"]))
                 model_dropdown = gr.Dropdown(
-                    choices=["microsoft/Mage-VL"],
-                    value="microsoft/Mage-VL",
+                    choices=model_choices,
+                    value=model_choices[0],
                     label="模型",
                 )
                 custom_model = gr.Textbox(
@@ -326,7 +330,10 @@ def main():
     # Preload models if specified
     if args.preload:
         for model_path in args.preload.split(","):
-            load_model(model_path.strip())
+            model_path = model_path.strip()
+            if model_path:
+                load_model(model_path)
+                _PRELOADED.append(model_path)
 
     # Build and launch UI
     demo = build_ui()
